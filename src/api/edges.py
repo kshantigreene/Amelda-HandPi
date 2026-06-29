@@ -7,7 +7,7 @@ router = APIRouter()
 
 @router.get("/")
 def list_edges():
-    return []
+    return db.list_edges()
 
 
 @router.get("/{edge_id}")
@@ -19,7 +19,7 @@ def get_edge(edge_id: str):
 def create_edge(body: EdgeCreate):
     from datetime import datetime, timezone
     now = datetime.now(timezone.utc).isoformat()
-    return db.create_edge(body.id, body.from_id, body.to_id, body.relationship_type, body.creator, now)
+    return db.create_edge(body.id, body.from_id, body.to_id, body.relationship_type, body.creator, now, body.weight)
 
 
 @router.put("/{edge_id}")

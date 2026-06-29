@@ -5,7 +5,7 @@ import re
 _SAFE_ID = re.compile(r'^[a-zA-Z0-9_-]{1,64}$')
 
 NODE_TYPES = Literal["concept", "free"]
-EDGE_TYPES = Literal["user", "auto"]
+EDGE_TYPES = Literal["user", "auto", "sequence"]
 
 
 def _validate_id(v: str) -> str:
@@ -20,11 +20,17 @@ class NodeCreate(BaseModel):
     other_content: Optional[str] = Field(None, max_length=10_000)
     node_type: NODE_TYPES
     creator: str = Field(..., max_length=64)
+    previous_id: Optional[str] = None
 
     @field_validator("id", "creator")
     @classmethod
     def safe_id(cls, v: str) -> str:
         return _validate_id(v)
+
+    @field_validator("previous_id")
+    @classmethod
+    def safe_previous_id(cls, v: Optional[str]) -> Optional[str]:
+        return v if v is None else _validate_id(v)
 
 
 class NodeUpdate(BaseModel):

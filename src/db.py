@@ -24,7 +24,7 @@ def init_db(path: str = DB_PATH) -> None:
             );
 
             INSERT OR IGNORE INTO node_type(name) VALUES ('concept'), ('free');
-            INSERT OR IGNORE INTO edge_type(name) VALUES ('user'), ('auto');
+            INSERT OR IGNORE INTO edge_type(name) VALUES ('user'), ('auto'), ('sequence');
 
             CREATE TABLE IF NOT EXISTS nodes (
                 id               TEXT PRIMARY KEY,
@@ -84,17 +84,21 @@ def update_node(id: str, text_content: str, now: str) -> dict | None:
         return dict(conn.execute("SELECT * FROM nodes WHERE id = ?", (id,)).fetchone())
 
 
-def create_edge(id: str, from_id: str, to_id: str, relationship_type: str, creator: str, now: str) -> dict:
+def create_edge(id: str, from_id: str, to_id: str, relationship_type: str, creator: str, now: str, weight: float | None = None) -> dict:
     with get_connection() as conn:
         conn.execute(
-            """INSERT INTO edges (id, from_id, to_id, relationship_type, creator, created_at, updated_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?)""",
-            (id, from_id, to_id, relationship_type, creator, now, now),
+            """INSERT INTO edges (id, from_id, to_id, relationship_type, weight, creator, created_at, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            (id, from_id, to_id, relationship_type, weight, creator, now, now),
         )
     return {"id": id, "from_id": from_id, "to_id": to_id, "relationship_type": relationship_type,
-            "creator": creator, "created_at": now, "updated_at": now}
+            "weight": weight, "creator": creator, "created_at": now, "updated_at": now}
 
-
+def list_edges() -> list[dict]:
+    with get_connection() as conn:
+        rows = conn.execute("SELECT * FROM edges WHERE is_deleted = 0").fetchall()
+        return [dict(r) for r in rows]
+    
 if __name__ == "__main__":
     init_db()
     print(f"Database initialized at: {DB_PATH}")
