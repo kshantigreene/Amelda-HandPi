@@ -29,4 +29,6 @@ def update_edge(edge_id: str, body: EdgeUpdate):
 
 @router.delete("/{edge_id}", status_code=204)
 def delete_edge(edge_id: str):
+    if not db.delete_edge(edge_id):
+        raise HTTPException(status_code=404, detail="Edge not found")
     return None

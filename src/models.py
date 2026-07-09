@@ -54,9 +54,11 @@ class EdgeCreate(BaseModel):
         return _validate_id(v)
 
     @model_validator(mode="after")
-    def default_auto_weight(self):
+    def default_weights(self):
         if self.relationship_type == "auto" and self.weight is None:
             self.weight = 0.1
+        if self.relationship_type == "user" and self.weight is None:
+            self.weight = 1.0
         return self
 
 
@@ -64,3 +66,13 @@ class EdgeUpdate(BaseModel):
     directed: Optional[bool] = None
     relationship_type: Optional[EDGE_TYPES] = None
     weight: Optional[float] = Field(None, ge=-1e9, le=1e9)
+
+
+class AppStateUpdate(BaseModel):
+    current_note_id: Optional[str] = None
+    mode: Literal["new", "view", "edit"] = "new"
+
+    @field_validator("current_note_id")
+    @classmethod
+    def safe_current_note_id(cls, v: Optional[str]) -> Optional[str]:
+        return v if v is None else _validate_id(v)
