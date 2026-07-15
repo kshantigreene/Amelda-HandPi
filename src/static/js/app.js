@@ -1,28 +1,47 @@
+// null = SQLite mode; object = external JSON graph is open (never touches the DB)
+let fileGraph = null;
+let fileGraphDirty = false;
+let _preFileState = null; // saves SQLite app state to restore when file is closed
+
 const api = {
   async getNodes() {
+    if (fileGraph) return fileGraph.nodes.filter(n => !n.is_deleted);
     const res = await fetch("/api/nodes/");
     return res.json();
   },
   async getEdges() {
+    if (fileGraph) return fileGraph.edges.filter(e => !e.is_deleted);
     const res = await fetch("/api/edges/");
     return res.json();
   },
   async createNode(id, textContent, previousId) {
+    if (fileGraph) {
+      const now = new Date().toISOString();
+      const node = { id, text_content: textContent, other_content: null, node_type: "free", creator: "local", created_at: now, updated_at: now, is_deleted: 0 };
+      fileGraph.nodes.push(node);
+      if (previousId) {
+        fileGraph.edges.push({ id: crypto.randomUUID(), from_id: previousId, to_id: id, directed: 1, relationship_type: "sequence", weight: null, creator: "local", created_at: now, updated_at: now, is_deleted: 0 });
+      }
+      fileGraphDirty = true;
+      return node;
+    }
     const res = await fetch("/api/nodes/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        id,
-        text_content: textContent,
-        node_type: "free",
-        creator: "local",
-        previous_id: previousId || null,
-      }),
+      body: JSON.stringify({ id, text_content: textContent, node_type: "free", creator: "local", previous_id: previousId || null }),
     });
     if (!res.ok) throw new Error(await res.text());
     return res.json();
   },
   async updateNode(id, textContent) {
+    if (fileGraph) {
+      const node = fileGraph.nodes.find(n => n.id === id && !n.is_deleted);
+      if (!node) throw new Error("Node not found");
+      node.text_content = textContent;
+      node.updated_at = new Date().toISOString();
+      fileGraphDirty = true;
+      return node;
+    }
     const res = await fetch(`/api/nodes/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -32,43 +51,66 @@ const api = {
     return res.json();
   },
   async createEdge(fromId, toId, relationshipType) {
+    if (fileGraph) {
+      const now = new Date().toISOString();
+      const weight = relationshipType === "user" ? 1.0 : relationshipType === "auto" ? 0.1 : null;
+      const edge = { id: crypto.randomUUID(), from_id: fromId, to_id: toId, directed: 1, relationship_type: relationshipType, weight, creator: "local", created_at: now, updated_at: now, is_deleted: 0 };
+      fileGraph.edges.push(edge);
+      fileGraphDirty = true;
+      return edge;
+    }
     const res = await fetch("/api/edges/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        id: crypto.randomUUID(),
-        from_id: fromId,
-        to_id: toId,
-        relationship_type: relationshipType,
-        creator: "local",
-      }),
+      body: JSON.stringify({ id: crypto.randomUUID(), from_id: fromId, to_id: toId, relationship_type: relationshipType, creator: "local" }),
     });
     if (!res.ok) throw new Error(await res.text());
     return res.json();
   },
   async deleteEdge(edgeId) {
+    if (fileGraph) {
+      const edge = fileGraph.edges.find(e => e.id === edgeId && !e.is_deleted);
+      if (!edge) throw new Error("Edge not found");
+      edge.is_deleted = 1;
+      fileGraphDirty = true;
+      return;
+    }
     const res = await fetch(`/api/edges/${edgeId}`, { method: "DELETE" });
     if (!res.ok) throw new Error(await res.text());
   },
   async deleteNode(nodeId) {
+    if (fileGraph) {
+      const node = fileGraph.nodes.find(n => n.id === nodeId && !n.is_deleted);
+      if (!node) throw new Error("Node not found");
+      node.is_deleted = 1;
+      fileGraph.edges.forEach(e => {
+        if ((e.from_id === nodeId || e.to_id === nodeId) && !e.is_deleted) e.is_deleted = 1;
+      });
+      fileGraphDirty = true;
+      return;
+    }
     const res = await fetch(`/api/nodes/${nodeId}`, { method: "DELETE" });
     if (!res.ok) throw new Error(await res.text());
   },
   async matchEdges(nodeId) {
+    if (fileGraph) return { created_edges: [] }; // auto edges skipped for external graphs
     const res = await fetch(`/api/nodes/${nodeId}/match-edges`, { method: "POST" });
     if (!res.ok) throw new Error(await res.text());
     return res.json();
   },
   async getNode(id) {
+    if (fileGraph) return fileGraph.nodes.find(n => n.id === id && !n.is_deleted) || null;
     const res = await fetch(`/api/nodes/${id}`);
     if (!res.ok) return null;
     return res.json();
   },
   async getState() {
+    if (fileGraph) return { current_note_id: null, mode: "new" };
     const res = await fetch("/api/state/");
     return res.json();
   },
   async setState(currentNoteId, modeValue) {
+    if (fileGraph) return; // state is in-memory only during file mode
     const res = await fetch("/api/state/", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -740,9 +782,123 @@ function onThemeToggle() {
   localStorage.setItem("theme", isLight ? "light" : "dark");
 }
 
+function updateFileModeUI() {
+  document.getElementById("save-graph").style.display = fileGraph ? "" : "none";
+  document.getElementById("close-graph").style.display = fileGraph ? "" : "none";
+  const panel = document.getElementById("panel-top-left");
+  panel.innerHTML = "";
+  if (fileGraph) {
+    const el = document.createElement("div");
+    el.className = "file-mode-indicator";
+    el.textContent = "External Graph";
+    panel.appendChild(el);
+  }
+}
+
+function openFileGraph(data) {
+  if (!data || !Array.isArray(data.nodes) || !Array.isArray(data.edges)) {
+    alert("Invalid graph file: expected { nodes: [], edges: [] }.");
+    return;
+  }
+  _preFileState = { note: currentNote, mode };
+  fileGraph = { nodes: data.nodes, edges: data.edges };
+  fileGraphDirty = false;
+
+  const first = fileGraph.nodes
+    .filter(n => !n.is_deleted)
+    .sort((a, b) => (a.created_at || "").localeCompare(b.created_at || ""))[0];
+  setAppState(first ? { id: first.id, text: first.text_content } : null, first ? "view" : "new");
+  updateFileModeUI();
+}
+
+async function saveFileGraph() {
+  if (!fileGraph) return;
+  const username = promptUsername();
+  if (!username) return;
+  const saveData = {
+    nodes: fileGraph.nodes.filter(n => !n.is_deleted),
+    edges: fileGraph.edges.filter(e => !e.is_deleted),
+  };
+  triggerDownload(applyUsername(saveData, username), "amelda-graph.json");
+  fileGraphDirty = false;
+}
+
+function closeFileGraph() {
+  if (!fileGraph) return;
+  if (fileGraphDirty && !confirm("You have unsaved changes to the external graph. Close without saving?")) return;
+  fileGraph = null;
+  fileGraphDirty = false;
+  const pre = _preFileState;
+  _preFileState = null;
+  setAppState(pre?.note || null, pre?.note ? (pre.mode || "view") : "new");
+  updateFileModeUI();
+}
+
+function triggerDownload(data, filename) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function promptUsername() {
+  const raw = prompt("Enter your username for this export.\n(No spaces allowed)");
+  if (raw === null) return null;           // cancelled
+  const name = raw.trim();
+  if (!name) { alert("Username cannot be empty."); return null; }
+  if (name.includes(" ")) { alert("Username cannot contain spaces."); return null; }
+  return name;
+}
+
+function applyUsername(data, username) {
+  const remap = (obj) => obj.creator === "local" ? { ...obj, creator: username } : obj;
+  return { nodes: data.nodes.map(remap), edges: data.edges.map(remap) };
+}
+
 async function init() {
+  const hamburgerBtn  = document.getElementById("hamburger-btn");
+  const hamburgerMenu = document.getElementById("hamburger-menu");
+  hamburgerBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    hamburgerMenu.hidden = !hamburgerMenu.hidden;
+  });
+  document.addEventListener("click", () => { hamburgerMenu.hidden = true; });
+
   document.getElementById("theme-toggle").addEventListener("click", onThemeToggle);
   applyTheme(localStorage.getItem("theme") === "light");
+
+  const openGraphInput = document.getElementById("open-graph-input");
+  openGraphInput.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try { openFileGraph(JSON.parse(ev.target.result)); }
+      catch { alert("Could not parse file as JSON."); }
+    };
+    reader.readAsText(file);
+    openGraphInput.value = ""; // reset so the same file can be reopened
+  });
+  document.getElementById("open-graph").addEventListener("click", () => openGraphInput.click());
+  document.getElementById("save-graph").addEventListener("click", saveFileGraph);
+  document.getElementById("close-graph").addEventListener("click", closeFileGraph);
+
+  document.getElementById("export-all").addEventListener("click", async () => {
+    const username = promptUsername();
+    if (!username) return;
+    const res = await fetch("/api/export/all");
+    triggerDownload(applyUsername(await res.json(), username), "amelda-all.json");
+  });
+
+  document.getElementById("export-connected").addEventListener("click", async () => {
+    if (!currentNote) { alert("No note is focused."); return; }
+    const username = promptUsername();
+    if (!username) return;
+    const res = await fetch(`/api/export/connected/${currentNote.id}`);
+    triggerDownload(applyUsername(await res.json(), username), "amelda-connected.json");
+  });
 
   try {
     const state = await api.getState();

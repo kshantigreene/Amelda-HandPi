@@ -409,17 +409,69 @@ body.light-theme #panel-right.connect-mode .block-action {
   background: var(--btn-hover-bg);
 }
 
-#theme-toggle {
+.file-mode-indicator {
+  padding: 8px 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #737598;
+  border-left: 3px solid #737598;
+  margin: 8px;
+}
+
+.hamburger-wrap {
+  position: relative;
+  padding: 8px;
+}
+
+.hamburger-btn {
   background: var(--btn-bg);
   border: 1px solid var(--btn-border);
   border-radius: 6px;
   color: var(--text);
   cursor: pointer;
-  font-size: 0.85rem;
-  padding: 6px 14px;
-  margin: 8px;
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 6px 10px;
 }
 
-#theme-toggle:hover {
+.hamburger-btn:hover {
   background: var(--btn-hover-bg);
+}
+
+.hamburger-menu {
+  position: absolute;
+  top: calc(100% - 4px);
+  right: 0;
+  min-width: 160px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  z-index: 100;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.menu-item {
+  display: block;
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.9rem;
+  padding: 10px 16px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.menu-item:hover {
+  background: var(--btn-hover-bg);
+}
+
+.menu-divider {
+  height: 1px;
+  background: var(--panel-border);
+  margin: 2px 0;
 }

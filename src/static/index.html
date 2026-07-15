@@ -12,7 +12,20 @@
       <div id="panel-top-left" class="panel panel-top-side"></div>
       <div id="panel-top-center" class="panel panel-top-center nav-side"></div>
       <div id="panel-top-right" class="panel panel-top-side">
-        <button id="theme-toggle">Light Mode</button>
+        <div class="hamburger-wrap">
+          <button id="hamburger-btn" class="hamburger-btn" title="Menu">☰</button>
+          <div id="hamburger-menu" class="hamburger-menu" hidden>
+            <button id="theme-toggle" class="menu-item">Light Mode</button>
+            <div class="menu-divider"></div>
+            <button id="open-graph" class="menu-item">Open Graph…</button>
+            <button id="save-graph" class="menu-item" style="display:none">Save Graph</button>
+            <button id="close-graph" class="menu-item" style="display:none">Close Graph</button>
+            <div class="menu-divider"></div>
+            <button id="export-connected" class="menu-item" title="Save notes connected to the focused note">Export Connected</button>
+            <button id="export-all" class="menu-item">Export All</button>
+          </div>
+          <input type="file" id="open-graph-input" accept=".json" style="display:none">
+        </div>
       </div>
     </div>
 
