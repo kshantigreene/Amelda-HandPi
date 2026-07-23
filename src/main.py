@@ -1,3 +1,5 @@
+# Copyright © 2026 Kshanti Greene. All rights reserved.
+
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse

@@ -1,3 +1,5 @@
+# Copyright © 2026 Kshanti Greene. All rights reserved.
+
 import json
 import math
 import re

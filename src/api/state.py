@@ -1,3 +1,5 @@
+# Copyright © 2026 Kshanti Greene. All rights reserved.
+
 from fastapi import APIRouter
 from models import AppStateUpdate
 import db

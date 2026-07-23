@@ -1,3 +1,5 @@
+# Copyright © 2026 Kshanti Greene. All rights reserved.
+
 from pydantic import BaseModel, Field, field_validator, model_validator
 from typing import Literal, Optional
 import re

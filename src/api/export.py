@@ -1,3 +1,5 @@
+# Copyright © 2026 Kshanti Greene. All rights reserved.
+
 from fastapi import APIRouter, HTTPException
 from collections import deque
 import db

@@ -1,3 +1,5 @@
+// Copyright © 2026 Kshanti Greene. All rights reserved.
+
 // null = SQLite mode; object = external JSON graph is open (never touches the DB)
 let fileGraph = null;
 let fileGraphDirty = false;

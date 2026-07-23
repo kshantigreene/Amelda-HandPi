@@ -1,3 +1,5 @@
+# Copyright © 2026 Kshanti Greene. All rights reserved.
+
 import uuid
 from datetime import datetime, timezone
 import db
