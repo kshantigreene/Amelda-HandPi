@@ -27,3 +27,11 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 @app.get("/", response_class=FileResponse)
 def index():
     return "static/index.html"
+
+@app.get("/sw.js", response_class=FileResponse)
+def service_worker():
+    return "static/sw.js"
+
+@app.get("/manifest.json", response_class=FileResponse)
+def manifest():
+    return "static/manifest.json"

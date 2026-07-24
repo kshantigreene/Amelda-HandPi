@@ -1,20 +1,96 @@
-// Copyright © 2026 Kshanti Greene. All rights reserved.
+// Copyright (c) 2026 Kshanti Greene. All rights reserved.
 
-// null = SQLite mode; object = external JSON graph is open (never touches the DB)
+// -- IndexedDB persistence --------------------------------------------------
+const IDB_NAME = "amelda";
+const IDB_VERSION = 1;
+let _idb = null;
+
+function openIDB() {
+  if (_idb) return Promise.resolve(_idb);
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(IDB_NAME, IDB_VERSION);
+    req.onupgradeneeded = ({ target: { result: db } }) => {
+      if (!db.objectStoreNames.contains("nodes"))
+        db.createObjectStore("nodes", { keyPath: "id" });
+      if (!db.objectStoreNames.contains("edges"))
+        db.createObjectStore("edges", { keyPath: "id" });
+    };
+    req.onsuccess = ({ target: { result: db } }) => { _idb = db; resolve(db); };
+    req.onerror = ({ target: { error } }) => reject(error);
+  });
+}
+
+async function idbGetAll(store) {
+  const db = await openIDB();
+  return new Promise((resolve, reject) => {
+    const req = db.transaction(store, "readonly").objectStore(store).getAll();
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function idbGet(store, id) {
+  const db = await openIDB();
+  return new Promise((resolve, reject) => {
+    const req = db.transaction(store, "readonly").objectStore(store).get(id);
+    req.onsuccess = () => resolve(req.result ?? null);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function idbPut(store, obj) {
+  const db = await openIDB();
+  return new Promise((resolve, reject) => {
+    const req = db.transaction(store, "readwrite").objectStore(store).put(obj);
+    req.onsuccess = () => resolve(obj);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+// -- Word-match (ported from word_match.py) ---------------------------------
+const STOP_WORDS = new Set(["able","about","above","abroad","according","accordingly","across","actually","adj","after","afterwards","again","against","ago","ahead","all","allow","allows","almost","alone","along","alongside","already","also","although","always","am","amid","amidst","among","amongst","an","and","another","any","anybody","anyhow","anyone","anything","anyway","anyways","anywhere","apart","appear","appreciate","appropriate","are","around","as","aside","ask","asking","associated","at","available","away","awfully","back","backward","backwards","be","became","because","become","becomes","becoming","been","before","beforehand","begin","behind","being","believe","below","beside","besides","best","better","between","beyond","both","brief","but","by","came","can","cannot","cant","caption","cause","causes","certain","certainly","changes","clearly","co","come","comes","concerning","consequently","consider","considering","contain","containing","contains","corresponding","could","course","currently","dare","definitely","described","despite","did","different","directly","do","does","doing","done","down","downwards","during","each","edu","eg","eight","eighty","either","else","elsewhere","end","ending","enough","entirely","especially","et","etc","even","ever","evermore","every","everybody","everyone","everything","everywhere","ex","exactly","example","except","fairly","far","farther","few","fewer","fifth","first","five","followed","following","follows","for","forever","former","formerly","forth","forward","found","four","from","further","furthermore","get","gets","getting","given","gives","go","goes","going","gone","got","gotten","greetings","had","half","happens","hardly","has","have","having","he","hello","help","hence","her","here","hereafter","hereby","herein","hereupon","hers","herself","hi","him","himself","his","hither","hopefully","how","howbeit","however","hundred","ie","if","ignored","immediate","in","inasmuch","inc","indeed","indicate","indicated","indicates","inner","inside","insofar","instead","into","inward","is","it","its","itself","just","keep","keeps","kept","know","known","knows","last","lately","later","latter","latterly","least","less","lest","let","like","liked","likely","likewise","little","look","looking","looks","low","lower","ltd","made","mainly","make","makes","many","may","maybe","me","mean","meantime","meanwhile","merely","might","mine","minus","miss","more","moreover","most","mostly","mr","mrs","much","must","my","myself","name","namely","nd","near","nearly","necessary","need","needs","neither","never","neverf","neverless","nevertheless","new","next","nine","ninety","no","nobody","non","none","nonetheless","noone","nor","normally","not","nothing","notwithstanding","novel","now","nowhere","obviously","of","off","often","oh","ok","okay","old","on","once","one","ones","only","onto","opposite","or","other","others","otherwise","ought","our","ours","ourselves","out","outside","over","overall","own","particular","particularly","past","per","perhaps","placed","please","plus","possible","presumably","probably","provided","provides","que","quite","qv","rather","rd","re","really","reasonably","recent","recently","regarding","regardless","regards","relatively","respectively","right","round","said","same","saw","say","saying","says","second","secondly","see","seeing","seem","seemed","seeming","seems","seen","self","selves","sensible","sent","serious","seriously","seven","several","shall","she","should","since","six","so","some","somebody","someday","somehow","someone","something","sometime","sometimes","somewhat","somewhere","soon","sorry","specified","specify","specifying","still","sub","such","sup","sure","take","taken","taking","tell","tends","th","than","thank","thanks","thanx","that","the","their","theirs","them","themselves","then","thence","there","thereafter","thereby","therefore","therein","theres","thereupon","these","they","thing","things","think","third","thirty","this","thorough","thoroughly","those","though","three","through","throughout","thru","thus","till","to","together","too","took","toward","towards","tried","tries","truly","try","trying","twice","two","un","under","underneath","undoing","unfortunately","unless","unlike","unlikely","until","unto","up","upon","upwards","us","use","used","useful","uses","using","usually","value","various","versus","very","via","viz","vs","want","wants","was","way","we","welcome","well","went","were","what","whatever","when","whence","whenever","where","whereafter","whereas","whereby","wherein","whereupon","wherever","whether","which","whichever","while","whilst","whither","who","whoever","whole","whom","whomever","whose","why","will","willing","wish","with","within","without","wonder","would","yes","yet","you","your","yours","yourself","yourselves","zero","a","i","b","c","d","e","f","g","h","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z","www","amount","bill","bottom","call","computer","con","cry","de","describe","detail","due","eleven","empty","fifteen","fifty","fill","find","fire","forty","front","full","give","interest","mill","move","part","put","show","side","sincere","sixty","system","ten","thick","thin","top","twelve","twenty","abst","accordance","act","added","adopted","affected","affecting","affects","ah","announce","anymore","apparently","approximately","arise","auth","beginning","beginnings","begins","biol","briefly","ca","date","ed","effect","ff","fix","gave","giving","hid","home","id","im","immediately","importance","important","index","information","invention","keys","kg","km","largely","lets","line","means","mg","million","ml","mug","na","nay","necessarily","nos","noted","obtain","obtained","omitted","ord","owing","page","pages","poorly","possibly","potentially","pp","predominantly","present","previously","primarily","promptly","proud","quickly","ran","readily","ref","refs","related","research","resulted","resulting","results","run","sec","section","showed","shown","shows","significant","significantly","similar","similarly","slightly","somethan","specifically","state","states","stop","strongly","substantially","successfully","sufficiently","suggest","thereof","thereto","thou","thousand","til","tip","ts","ups","usefully","usefulness","vol","vols","wed","widely","words","world"]);
+
+function extractWords(text) {
+  if (!text) return new Set();
+  const raw = text.toLowerCase().match(/[a-z']+/g) || [];
+  return new Set(raw.filter(w => !STOP_WORDS.has(w)));
+}
+
+// -- BFS connected-subgraph export (mirrors export.py _subgraph) ------------
+function exportConnected(focusedId, allNodes, allEdges) {
+  const EXPORT_TYPES = new Set(["sequence", "user"]);
+  const nodesById = new Map(allNodes.map(n => [n.id, n]));
+  const visited = new Set();
+  const queue = [focusedId];
+  while (queue.length) {
+    const cur = queue.shift();
+    if (visited.has(cur)) continue;
+    visited.add(cur);
+    for (const e of allEdges) {
+      if (!EXPORT_TYPES.has(e.relationship_type)) continue;
+      if (e.from_id === cur && !visited.has(e.to_id)) queue.push(e.to_id);
+      else if (e.to_id === cur && !visited.has(e.from_id)) queue.push(e.from_id);
+    }
+  }
+  return {
+    nodes: [...visited].filter(id => nodesById.has(id)).map(id => nodesById.get(id)),
+    edges: allEdges.filter(e => EXPORT_TYPES.has(e.relationship_type) && visited.has(e.from_id) && visited.has(e.to_id)),
+  };
+}
+
+// null = IndexedDB mode; object = external JSON graph is open (never touches IndexedDB)
 let fileGraph = null;
 let fileGraphDirty = false;
-let _preFileState = null; // saves SQLite app state to restore when file is closed
+let _preFileState = null; // saves app state to restore when file is closed
 
 const api = {
   async getNodes() {
     if (fileGraph) return fileGraph.nodes.filter(n => !n.is_deleted);
-    const res = await fetch("/api/nodes/");
-    return res.json();
+    return idbGetAll("nodes").then(ns => ns.filter(n => !n.is_deleted));
   },
   async getEdges() {
     if (fileGraph) return fileGraph.edges.filter(e => !e.is_deleted);
-    const res = await fetch("/api/edges/");
-    return res.json();
+    return idbGetAll("edges").then(es => es.filter(e => !e.is_deleted));
   },
   async createNode(id, textContent, previousId) {
     if (fileGraph) {
@@ -27,13 +103,14 @@ const api = {
       fileGraphDirty = true;
       return node;
     }
-    const res = await fetch("/api/nodes/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, text_content: textContent, node_type: "free", creator: "local", previous_id: previousId || null }),
-    });
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
+    const now = new Date().toISOString();
+    const node = { id, text_content: textContent, other_content: null, node_type: "free", creator: "local", created_at: now, updated_at: now, is_deleted: 0 };
+    await idbPut("nodes", node);
+    if (previousId) {
+      const edge = { id: crypto.randomUUID(), from_id: previousId, to_id: id, directed: 1, relationship_type: "sequence", weight: null, creator: "local", created_at: now, updated_at: now, is_deleted: 0 };
+      await idbPut("edges", edge);
+    }
+    return node;
   },
   async updateNode(id, textContent) {
     if (fileGraph) {
@@ -44,13 +121,11 @@ const api = {
       fileGraphDirty = true;
       return node;
     }
-    const res = await fetch(`/api/nodes/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text_content: textContent }),
-    });
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
+    const node = await idbGet("nodes", id);
+    if (!node || node.is_deleted) throw new Error("Node not found");
+    node.text_content = textContent;
+    node.updated_at = new Date().toISOString();
+    return idbPut("nodes", node);
   },
   async createEdge(fromId, toId, relationshipType) {
     if (fileGraph) {
@@ -61,13 +136,10 @@ const api = {
       fileGraphDirty = true;
       return edge;
     }
-    const res = await fetch("/api/edges/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: crypto.randomUUID(), from_id: fromId, to_id: toId, relationship_type: relationshipType, creator: "local" }),
-    });
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
+    const now = new Date().toISOString();
+    const weight = relationshipType === "user" ? 1.0 : relationshipType === "auto" ? 0.1 : null;
+    const edge = { id: crypto.randomUUID(), from_id: fromId, to_id: toId, directed: 1, relationship_type: relationshipType, weight, creator: "local", created_at: now, updated_at: now, is_deleted: 0 };
+    return idbPut("edges", edge);
   },
   async deleteEdge(edgeId) {
     if (fileGraph) {
@@ -77,8 +149,10 @@ const api = {
       fileGraphDirty = true;
       return;
     }
-    const res = await fetch(`/api/edges/${edgeId}`, { method: "DELETE" });
-    if (!res.ok) throw new Error(await res.text());
+    const edge = await idbGet("edges", edgeId);
+    if (!edge) throw new Error("Edge not found");
+    edge.is_deleted = 1;
+    await idbPut("edges", edge);
   },
   async deleteNode(nodeId) {
     if (fileGraph) {
@@ -91,35 +165,66 @@ const api = {
       fileGraphDirty = true;
       return;
     }
-    const res = await fetch(`/api/nodes/${nodeId}`, { method: "DELETE" });
-    if (!res.ok) throw new Error(await res.text());
+    const node = await idbGet("nodes", nodeId);
+    if (!node) throw new Error("Node not found");
+    node.is_deleted = 1;
+    await idbPut("nodes", node);
+    const allEdges = await idbGetAll("edges");
+    for (const edge of allEdges) {
+      if ((edge.from_id === nodeId || edge.to_id === nodeId) && !edge.is_deleted) {
+        edge.is_deleted = 1;
+        await idbPut("edges", edge);
+      }
+    }
   },
   async matchEdges(nodeId) {
     if (fileGraph) return { created_edges: [] }; // auto edges skipped for external graphs
-    const res = await fetch(`/api/nodes/${nodeId}/match-edges`, { method: "POST" });
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
+    const [allNodes, allEdges] = await Promise.all([
+      idbGetAll("nodes").then(ns => ns.filter(n => !n.is_deleted)),
+      idbGetAll("edges").then(es => es.filter(e => !e.is_deleted)),
+    ]);
+    const node = allNodes.find(n => n.id === nodeId);
+    if (!node) return { created_edges: [] };
+
+    const alreadyLinked = new Set(
+      allEdges
+        .filter(e => e.from_id === nodeId || e.to_id === nodeId)
+        .map(e => e.from_id === nodeId ? e.to_id : e.from_id)
+    );
+    const nodeWords = extractWords(node.text_content);
+    if (!nodeWords.size) return { created_edges: [] };
+
+    const now = new Date().toISOString();
+    const created = [];
+    for (const other of allNodes) {
+      if (other.id === nodeId || alreadyLinked.has(other.id)) continue;
+      const common = [...nodeWords].filter(w => extractWords(other.text_content).has(w));
+      if (!common.length) continue;
+      const weight = Math.log(common.length + 1);
+      const [fromId, toId] = (node.created_at || "") <= (other.created_at || "")
+        ? [node.id, other.id] : [other.id, node.id];
+      const edge = { id: crypto.randomUUID(), from_id: fromId, to_id: toId, directed: 1, relationship_type: "auto", weight, creator: "system", created_at: now, updated_at: now, is_deleted: 0 };
+      await idbPut("edges", edge);
+      created.push(edge.id);
+      alreadyLinked.add(other.id);
+    }
+    return { created_edges: created };
   },
   async getNode(id) {
     if (fileGraph) return fileGraph.nodes.find(n => n.id === id && !n.is_deleted) || null;
-    const res = await fetch(`/api/nodes/${id}`);
-    if (!res.ok) return null;
-    return res.json();
+    const node = await idbGet("nodes", id);
+    return node && !node.is_deleted ? node : null;
   },
   async getState() {
     if (fileGraph) return { current_note_id: null, mode: "new" };
-    const res = await fetch("/api/state/");
-    return res.json();
+    try {
+      const saved = localStorage.getItem("amelda_state");
+      return saved ? JSON.parse(saved) : { current_note_id: null, mode: "new" };
+    } catch { return { current_note_id: null, mode: "new" }; }
   },
   async setState(currentNoteId, modeValue) {
     if (fileGraph) return; // state is in-memory only during file mode
-    const res = await fetch("/api/state/", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ current_note_id: currentNoteId, mode: modeValue }),
-    });
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
+    localStorage.setItem("amelda_state", JSON.stringify({ current_note_id: currentNoteId, mode: modeValue }));
   },
 };
 
@@ -155,14 +260,14 @@ function renderSidePanel(panelId, note, onActivate, posLabel, jumpNode, jumpGlyp
         return g;
       };
 
-      if (jumpGlyph === "«" && jumpNode) row.appendChild(makeGlyph("«", jumpNode));
+      if (jumpGlyph === "\u00AB" && jumpNode) row.appendChild(makeGlyph("\u00AB", jumpNode));
       if (posLabel) {
         const lbl = document.createElement("span");
         lbl.className = "seq-position-label";
         lbl.textContent = posLabel;
         row.appendChild(lbl);
       }
-      if (jumpGlyph === "»" && jumpNode) row.appendChild(makeGlyph("»", jumpNode));
+      if (jumpGlyph === "\u00BB" && jumpNode) row.appendChild(makeGlyph("\u00BB", jumpNode));
 
       panel.appendChild(row);
     }
@@ -277,7 +382,7 @@ function buildFocusSearch() {
   const input = document.createElement("input");
   input.type = "text";
   input.className = "focus-search-input";
-  input.placeholder = "Find note…";
+  input.placeholder = "Find note\u2026";
 
   const dropdown = document.createElement("div");
   dropdown.className = "focus-search-dropdown";
@@ -452,7 +557,7 @@ async function renderGraphPanels() {
       { text: currentNote.text },
       () => focusOnNode(currentNote),
       total > 1 ? `${currentPos}/${total}` : null,
-      currentPos > 1 ? firstNode : null, "«");
+      currentPos > 1 ? firstNode : null, "\u00AB");
     renderSidePanel("panel-bottom-center", null, null);
     leftPanel.innerHTML = "";
     rightPanel.innerHTML = "";
@@ -471,7 +576,7 @@ async function renderGraphPanels() {
     focusedChainEl.textContent = fp > 0 && total > 1 ? `${fp}/${total}` : "";
   }
 
-  // Suppress « when olderNode is already first; suppress » when newerNode is already last
+  // Suppress \u00AB when olderNode is already first; suppress \u00BB when newerNode is already last
   const olderIsFirst = olderNode && olderNode.id === chain[0];
   const newerIsLast  = newerNode && newerNode.id === chain[chain.length - 1];
 
@@ -479,12 +584,12 @@ async function renderGraphPanels() {
     olderNode ? { text: olderNode.text_content } : null,
     () => focusOnNode(olderNode),
     olderNode ? fmtPos(olderNode.id) : null,
-    olderIsFirst ? null : firstNode, "«");
+    olderIsFirst ? null : firstNode, "\u00AB");
   renderSidePanel("panel-bottom-center",
     newerNode ? { text: newerNode.text_content } : null,
     () => focusOnNode(newerNode),
     newerNode ? fmtPos(newerNode.id) : null,
-    newerIsLast ? null : lastNode, "»");
+    newerIsLast ? null : lastNode, "\u00BB");
 
   // For left/right panels, direction doesn't matter -- only edge type does.
   // Resolve the "other" node for any edge involving the focused node.
@@ -541,7 +646,7 @@ function _updateRightContent(contentEl, allNodes, allEdges, nodesById, focusedId
         contentEl.appendChild(block);
       });
 
-    // "Create & connect" option — always shown when there's a query
+    // "Create & connect" option â€” always shown when there's a query
     const createBlock = document.createElement("div");
     createBlock.className = "related-block create-note-block";
     const createText = document.createElement("div");
@@ -691,7 +796,7 @@ async function onSubmitNew(text) {
 
     const { id: noteId, isNew } = await resolveNoteId(text, previousId);
 
-    // Insert into the chain: new → newerNode, old direct edge removed.
+    // Insert into the chain: new â†’ newerNode, old direct edge removed.
     // Guard against the degenerate case where the resolved note IS the next node.
     if (newerEdge && newerEdge.to_id !== noteId) {
       await api.createEdge(noteId, newerEdge.to_id, "sequence");
@@ -738,7 +843,7 @@ async function onSave(text) {
 async function onDeleteClick() {
   if (!currentNote) return;
   const preview = currentNote.text.length > 60
-    ? currentNote.text.slice(0, 60) + "…"
+    ? currentNote.text.slice(0, 60) + "\u2026"
     : currentNote.text;
   if (!confirm(`Delete this note?\n\n"${preview}"\n\nThis cannot be undone.`)) return;
 
@@ -836,13 +941,24 @@ function closeFileGraph() {
   updateFileModeUI();
 }
 
-function triggerDownload(data, filename) {
+async function triggerDownload(data, filename) {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  // Web Share API works on iOS where anchor-click download does not
+  if (navigator.share && navigator.canShare) {
+    const file = new File([blob], filename, { type: "application/json" });
+    if (navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file] }); return; }
+      catch (err) { if (err.name !== "AbortError") console.error("Share failed:", err); }
+    }
+  }
+  const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
+  a.href = url;
   a.download = filename;
+  document.body.appendChild(a);
   a.click();
-  URL.revokeObjectURL(a.href);
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 function promptUsername() {
@@ -890,16 +1006,16 @@ async function init() {
   document.getElementById("export-all").addEventListener("click", async () => {
     const username = promptUsername();
     if (!username) return;
-    const res = await fetch("/api/export/all");
-    triggerDownload(applyUsername(await res.json(), username), "amelda-all.json");
+    const [nodes, edges] = await Promise.all([api.getNodes(), api.getEdges()]);
+    await triggerDownload(applyUsername({ nodes, edges }, username), "amelda-all.json");
   });
 
   document.getElementById("export-connected").addEventListener("click", async () => {
     if (!currentNote) { alert("No note is focused."); return; }
     const username = promptUsername();
     if (!username) return;
-    const res = await fetch(`/api/export/connected/${currentNote.id}`);
-    triggerDownload(applyUsername(await res.json(), username), "amelda-connected.json");
+    const [nodes, edges] = await Promise.all([api.getNodes(), api.getEdges()]);
+    await triggerDownload(applyUsername(exportConnected(currentNote.id, nodes, edges), username), "amelda-connected.json");
   });
 
   try {

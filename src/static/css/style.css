@@ -31,6 +31,7 @@ body {
   background: var(--bg);
   color: var(--text);
   height: 100vh;
+  height: 100dvh; /* prevents iOS Safari address-bar overlap */
   display: flex;
   flex-direction: column;
 }
@@ -143,7 +144,7 @@ body.light-theme #panel-right.connect-mode .block-action {
   border-radius: 4px;
   color: var(--text);
   font-family: inherit;
-  font-size: 0.8rem;
+  font-size: 16px; /* ≥16px prevents iOS Safari auto-zoom on focus */
   padding: 4px 8px;
   outline: none;
 }
@@ -219,6 +220,13 @@ body.light-theme #panel-right.connect-mode .block-action {
 .block-action:hover {
   background: var(--btn-hover-bg);
   border-color: var(--text);
+}
+
+/* Touch devices have no hover; keep action buttons faintly visible */
+@media (hover: none) {
+  .block-action {
+    opacity: 0.45;
+  }
 }
 
 .related-text {
@@ -362,7 +370,7 @@ body.light-theme #panel-right.connect-mode .block-action {
   border-radius: 6px;
   color: var(--text);
   font-family: inherit;
-  font-size: 0.85rem;
+  font-size: 16px; /* ≥16px prevents iOS Safari auto-zoom on focus */
   padding: 6px 10px;
   outline: none;
 }
