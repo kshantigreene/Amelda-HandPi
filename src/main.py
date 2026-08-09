@@ -23,6 +23,8 @@ app.include_router(state.router, prefix="/api/state")
 app.include_router(export.router, prefix="/api/export")
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/js", StaticFiles(directory="static/js"), name="js")
+app.mount("/css", StaticFiles(directory="static/css"), name="css")
 
 @app.get("/", response_class=FileResponse)
 def index():

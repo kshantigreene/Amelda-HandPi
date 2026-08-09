@@ -242,11 +242,17 @@ let _graphPanelVersion = 0;      // incremented on each renderGraphPanels call; 
 const VERTICAL_EDGE_TYPE = "sequence";
 const MAX_RELATED = 5;
 
-function renderSidePanel(panelId, note, onActivate, posLabel, jumpNode, jumpGlyph) {
+function renderSidePanel(panelId, note, onActivate, posLabel, jumpNode, jumpGlyph, hintText) {
   const panel = document.getElementById(panelId);
   panel.innerHTML = "";
   panel.classList.toggle("inactive", !note);
   panel.onclick = note ? onActivate : null;
+  if (!note && hintText) {
+    const hint = document.createElement("div");
+    hint.className = "panel-empty-hint";
+    hint.textContent = hintText;
+    panel.appendChild(hint);
+  }
   if (note) {
     if (posLabel || jumpNode) {
       const row = document.createElement("div");
@@ -309,9 +315,18 @@ function buildEditor(initialText, buttons, shortcutAction) {
   const container = document.createElement("div");
   container.className = "nav-focused-inner";
 
+  const textareaWrap = document.createElement("div");
+  textareaWrap.className = "textarea-wrap";
+
   const textarea = document.createElement("textarea");
   textarea.placeholder = "Type here...";
   textarea.value = initialText;
+
+  const autoResize = () => {
+    textarea.style.height = "auto";
+    textarea.style.height = textarea.scrollHeight + "px";
+  };
+  textarea.addEventListener("input", autoResize);
 
   if (shortcutAction) {
     textarea.addEventListener("keydown", (e) => {
@@ -339,8 +354,9 @@ function buildEditor(initialText, buttons, shortcutAction) {
     btnRow.appendChild(btn);
   }
 
-  container.append(textarea, btnRow);
-  setTimeout(() => textarea.focus(), 0);
+  textareaWrap.appendChild(textarea);
+  container.append(textareaWrap, btnRow);
+  setTimeout(() => { autoResize(); textarea.focus(); }, 0);
   return container;
 }
 
@@ -558,7 +574,7 @@ async function renderGraphPanels() {
       () => focusOnNode(currentNote),
       total > 1 ? `${currentPos}/${total}` : null,
       currentPos > 1 ? firstNode : null, "\u00AB");
-    renderSidePanel("panel-bottom-center", null, null);
+    renderSidePanel("panel-bottom-center", null, null, null, null, null, "Later in sequence");
     leftPanel.innerHTML = "";
     rightPanel.innerHTML = "";
     _rightPanelFocusedId = null;
@@ -584,12 +600,14 @@ async function renderGraphPanels() {
     olderNode ? { text: olderNode.text_content } : null,
     () => focusOnNode(olderNode),
     olderNode ? fmtPos(olderNode.id) : null,
-    olderIsFirst ? null : firstNode, "\u00AB");
+    olderIsFirst ? null : firstNode, "\u00AB",
+    "Earlier in sequence");
   renderSidePanel("panel-bottom-center",
     newerNode ? { text: newerNode.text_content } : null,
     () => focusOnNode(newerNode),
     newerNode ? fmtPos(newerNode.id) : null,
-    newerIsLast ? null : lastNode, "\u00BB");
+    newerIsLast ? null : lastNode, "\u00BB",
+    "Later in sequence");
 
   // For left/right panels, direction doesn't matter -- only edge type does.
   // Resolve the "other" node for any edge involving the focused node.
@@ -610,17 +628,16 @@ async function renderGraphPanels() {
 
 function _updateRightContent(contentEl, allNodes, allEdges, nodesById, focusedId) {
   const rightPanel = document.getElementById("panel-right");
-  const cancelBtn = rightPanel.querySelector(".connect-cancel");
+  const cancelBtn = rightPanel._cancelBtn; // survives contentEl.innerHTML resets
   const isSearching = !!connectSearch;
 
   rightPanel.classList.toggle("connect-mode", isSearching);
-  if (cancelBtn) cancelBtn.style.display = isSearching ? "" : "none";
   if (!isSearching) {
     const input = rightPanel.querySelector(".connect-input");
     if (input) input.value = "";
   }
 
-  contentEl.innerHTML = "";
+  contentEl.innerHTML = ""; // detaches cancelBtn if it was in contentEl
 
   if (isSearching) {
     const query = connectSearch.toLowerCase();
@@ -676,7 +693,9 @@ function _updateRightContent(contentEl, allNodes, allEdges, nodesById, focusedId
       renderGraphPanels();
     });
     contentEl.appendChild(createBlock);
+    if (cancelBtn) { cancelBtn.style.display = ""; contentEl.appendChild(cancelBtn); }
   } else {
+    if (cancelBtn) { cancelBtn.style.display = "none"; rightPanel.appendChild(cancelBtn); }
     allEdges
       .filter((e) => e.relationship_type === "user" && (e.from_id === focusedId || e.to_id === focusedId))
       .map((e) => ({
@@ -724,11 +743,17 @@ function renderRightPanel(allNodes, allEdges, nodesById, focusedId) {
     const searchBar = document.createElement("div");
     searchBar.className = "connect-search-bar";
 
-    const input = document.createElement("input");
-    input.type = "text";
+    const input = document.createElement("textarea");
     input.className = "connect-input";
     input.placeholder = "Search to connect...";
     input.value = connectSearch;
+    input.rows = 1;
+
+    const connectAutoResize = () => {
+      if (!input.value) { input.style.height = ""; return; }
+      input.style.height = "auto";
+      input.style.height = input.scrollHeight + "px";
+    };
 
     const cancelBtn = document.createElement("button");
     cancelBtn.className = "connect-cancel btn";
@@ -740,17 +765,20 @@ function renderRightPanel(allNodes, allEdges, nodesById, focusedId) {
 
     input.addEventListener("input", (e) => {
       connectSearch = e.target.value;
+      connectAutoResize();
       _updateRightContent(contentEl, allNodes, allEdges, nodesById, focusedId);
     });
 
     cancelBtn.addEventListener("click", () => {
       connectSearch = "";
       input.value = "";
+      connectAutoResize();
       _updateRightContent(contentEl, allNodes, allEdges, nodesById, focusedId);
     });
 
-    searchBar.append(input, cancelBtn);
+    searchBar.append(input);
     panel.append(header, searchBar, contentEl);
+    panel._cancelBtn = cancelBtn; // stored off-DOM; _updateRightContent moves it as needed
   }
 
   const contentEl = panel.querySelector(".right-panel-content");
