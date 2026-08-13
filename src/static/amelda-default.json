@@ -1,0 +1,170 @@
+{
+  "nodes": [
+    {
+      "id": "fa1717c6-166d-4271-a35c-ea4c3a9a58f9",
+      "text_content": "Amelda is a cloud-free notes and journaling application.\n\n* You own your data.\n* Your data is saved on your device.\n* You decide when to share it and with whom.\n* We will never collect your data or give it to a third party.\n\nTap the note just below this one to read more…",
+      "other_content": null,
+      "node_type": "free",
+      "creator": "amelda",
+      "created_at": "2026-08-10T18:46:26.080Z",
+      "updated_at": "2026-08-13T15:55:47.573Z",
+      "is_deleted": 0
+    },
+    {
+      "id": "15eb5746-edd8-459b-a2ec-bf4049f5ad5d",
+      "text_content": "Amelda is semi-structured. This means that individual notes can be connected to organize and navigate between notes.\n\nThe note in the middle panel is the focused note. \n\nYou can focus any note by tapping on it. \n\nOnce focused, you can edit a note by tapping Edit. Tap Submit to save.",
+      "other_content": null,
+      "node_type": "free",
+      "creator": "amelda",
+      "created_at": "2026-08-10T18:57:15.353Z",
+      "updated_at": "2026-08-10T19:53:28.491Z",
+      "is_deleted": 0
+    },
+    {
+      "id": "78439676-10dd-4d8e-b9be-360622986cee",
+      "text_content": "Notes in the vertical dimension are sequentially connected to the focused note. \n\nTapping New Note adds a new note after the currently focused note. \n\nYou can scroll through sequential notes by clicking on a note in the upper or lower panels to focus the note.",
+      "other_content": null,
+      "node_type": "free",
+      "creator": "amelda",
+      "created_at": "2026-08-10T19:10:19.889Z",
+      "updated_at": "2026-08-10T19:26:21.504Z",
+      "is_deleted": 0
+    },
+    {
+      "id": "df0aa976-2a1d-4410-be27-9feae97ba94a",
+      "text_content": "Notes in the horizontal dimension are conceptual connections to the focused note.\n\nThe left side shows suggested connections (notes that share topics). You can connect these explicitly by tapping the + in the suggested connection. \n\nThe right side shows notes that you explicitly connected to the focused note.",
+      "other_content": null,
+      "node_type": "free",
+      "creator": "amelda",
+      "created_at": "2026-08-10T19:11:50.581Z",
+      "updated_at": "2026-08-10T19:15:32.481Z",
+      "is_deleted": 0
+    },
+    {
+      "id": "cbde8fe3-db5a-4a4a-8a0d-85442d961708",
+      "text_content": "To find and focus a note that isn’t on the screen, type some text in Find Note (in the center panel). Notes containing that text will appear. Select one to focus.\n\nTo connect the focused note to a note that isn’t on the screen, type some text in Search to Connect (in the right panel). Notes containing the text will appear. Select one to connect to the focused note.",
+      "other_content": null,
+      "node_type": "free",
+      "creator": "amelda",
+      "created_at": "2026-08-10T19:19:35.888Z",
+      "updated_at": "2026-08-13T15:57:43.463Z",
+      "is_deleted": 0
+    },
+    {
+      "id": "5b975223-e12d-4279-9c6e-94cb6f1feced",
+      "text_content": "Your notes are saved in your browser. \n\nYou can save your notes to a file if you want to share them or open elsewhere:\n\n* Tap the hamburger menu in the top right panel.\n\n* To export all notes connected to the focused note, tap Export Connected\n\n* To export all notes, tap Export All\n\n* Type in a username or some nickname to identify the owner of these notes.\n\n * Tap OK to save\n\nNote: A group of connected notes is called a Graph.",
+      "other_content": null,
+      "node_type": "free",
+      "creator": "amelda",
+      "created_at": "2026-08-10T19:42:25.268Z",
+      "updated_at": "2026-08-13T16:04:57.853Z",
+      "is_deleted": 0
+    },
+    {
+      "id": "da1e7688-f135-432b-884c-5b7a36cf28b8",
+      "text_content": "Amelda saves all your data locally automatically. \n\nTo open an external graph, tap Open Graph and find the previously saved file and select it.\n\nOnly the external graph will be shown. To close it, tap Close Graph in the hamburger menu.\n\nAny changes you made will be saved to the file.",
+      "other_content": null,
+      "node_type": "free",
+      "creator": "amelda",
+      "created_at": "2026-08-10T19:44:33.386Z",
+      "updated_at": "2026-08-13T16:00:03.609Z",
+      "is_deleted": 0
+    },
+    {
+      "id": "69e5fc12-a48f-4877-bf61-78cc4084948f",
+      "text_content": "To get started on your own notes, click the New Note button twice!",
+      "other_content": null,
+      "node_type": "free",
+      "creator": "amelda",
+      "created_at": "2026-08-13T15:52:01.753Z",
+      "updated_at": "2026-08-13T15:52:01.753Z",
+      "is_deleted": 0
+    }
+  ],
+  "edges": [
+    {
+      "id": "0f0341e7-e96f-4884-94ea-6d75cd147184",
+      "from_id": "da1e7688-f135-432b-884c-5b7a36cf28b8",
+      "to_id": "69e5fc12-a48f-4877-bf61-78cc4084948f",
+      "directed": 1,
+      "relationship_type": "sequence",
+      "weight": null,
+      "creator": "amelda",
+      "created_at": "2026-08-13T15:52:01.753Z",
+      "updated_at": "2026-08-13T15:52:01.753Z",
+      "is_deleted": 0
+    },
+    {
+      "id": "5675085b-2b1b-46c9-b421-bdbc7536300d",
+      "from_id": "fa1717c6-166d-4271-a35c-ea4c3a9a58f9",
+      "to_id": "15eb5746-edd8-459b-a2ec-bf4049f5ad5d",
+      "directed": 1,
+      "relationship_type": "sequence",
+      "weight": null,
+      "creator": "amelda",
+      "created_at": "2026-08-10T18:57:15.353Z",
+      "updated_at": "2026-08-10T18:57:15.353Z",
+      "is_deleted": 0
+    },
+    {
+      "id": "7fddb7b1-9ad1-44c5-9965-02ef58076d89",
+      "from_id": "15eb5746-edd8-459b-a2ec-bf4049f5ad5d",
+      "to_id": "78439676-10dd-4d8e-b9be-360622986cee",
+      "directed": 1,
+      "relationship_type": "sequence",
+      "weight": null,
+      "creator": "amelda",
+      "created_at": "2026-08-10T19:10:19.889Z",
+      "updated_at": "2026-08-10T19:10:19.889Z",
+      "is_deleted": 0
+    },
+    {
+      "id": "9661a62d-2d1d-458a-b48f-af13e99ea664",
+      "from_id": "cbde8fe3-db5a-4a4a-8a0d-85442d961708",
+      "to_id": "5b975223-e12d-4279-9c6e-94cb6f1feced",
+      "directed": 1,
+      "relationship_type": "sequence",
+      "weight": null,
+      "creator": "amelda",
+      "created_at": "2026-08-10T19:42:25.268Z",
+      "updated_at": "2026-08-10T19:42:25.268Z",
+      "is_deleted": 0
+    },
+    {
+      "id": "ae700892-95ab-40e9-8e53-33fde1c31a8e",
+      "from_id": "5b975223-e12d-4279-9c6e-94cb6f1feced",
+      "to_id": "da1e7688-f135-432b-884c-5b7a36cf28b8",
+      "directed": 1,
+      "relationship_type": "sequence",
+      "weight": null,
+      "creator": "amelda",
+      "created_at": "2026-08-10T19:44:33.386Z",
+      "updated_at": "2026-08-10T19:44:33.386Z",
+      "is_deleted": 0
+    },
+    {
+      "id": "d714e82d-b91d-4e3c-819b-734eeb78d3e0",
+      "from_id": "78439676-10dd-4d8e-b9be-360622986cee",
+      "to_id": "df0aa976-2a1d-4410-be27-9feae97ba94a",
+      "directed": 1,
+      "relationship_type": "sequence",
+      "weight": null,
+      "creator": "amelda",
+      "created_at": "2026-08-10T19:11:50.581Z",
+      "updated_at": "2026-08-10T19:11:50.581Z",
+      "is_deleted": 0
+    },
+    {
+      "id": "fc046442-bcfb-4b0f-8d0b-590e86375cc6",
+      "from_id": "df0aa976-2a1d-4410-be27-9feae97ba94a",
+      "to_id": "cbde8fe3-db5a-4a4a-8a0d-85442d961708",
+      "directed": 1,
+      "relationship_type": "sequence",
+      "weight": null,
+      "creator": "amelda",
+      "created_at": "2026-08-10T19:19:35.888Z",
+      "updated_at": "2026-08-10T19:19:35.888Z",
+      "is_deleted": 0
+    }
+  ]
+}

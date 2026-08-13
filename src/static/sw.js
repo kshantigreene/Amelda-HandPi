@@ -1,11 +1,12 @@
 // Copyright © 2026 Kshanti Greene. All rights reserved.
 
-const CACHE_NAME = "amelda-v2";
+const CACHE_NAME = "amelda-v3";
 const PRECACHE = [
   "./",
   "./css/style.css",
   "./js/app.js",
   "./manifest.json",
+  "./amelda-default.json",
 ];
 
 self.addEventListener("install", (e) => {

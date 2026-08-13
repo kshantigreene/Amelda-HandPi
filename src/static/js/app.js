@@ -323,8 +323,8 @@ function buildEditor(initialText, buttons, shortcutAction) {
   textarea.value = initialText;
 
   const autoResize = () => {
-    textarea.style.height = "auto";
-    textarea.style.height = textarea.scrollHeight + "px";
+    textarea.style.height = "0";
+    textarea.style.height = Math.max(textarea.scrollHeight, textareaWrap.clientHeight) + "px";
   };
   textarea.addEventListener("input", autoResize);
 
@@ -1003,6 +1003,19 @@ function applyUsername(data, username) {
   return { nodes: data.nodes.map(remap), edges: data.edges.map(remap) };
 }
 
+async function seedDatabase() {
+  try {
+    const res = await fetch("./amelda-default.json");
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!Array.isArray(data.nodes) || !Array.isArray(data.edges)) return;
+    for (const node of data.nodes) await idbPut("nodes", node);
+    for (const edge of data.edges) await idbPut("edges", edge);
+  } catch (err) {
+    console.warn("Could not load default graph:", err);
+  }
+}
+
 async function init() {
   const hamburgerBtn  = document.getElementById("hamburger-btn");
   const hamburgerMenu = document.getElementById("hamburger-menu");
@@ -1046,6 +1059,10 @@ async function init() {
     await triggerDownload(applyUsername(exportConnected(currentNote.id, nodes, edges), username), "amelda-connected.json");
   });
 
+  const existingNodes = await api.getNodes();
+  const isFirstLaunch = !existingNodes.length;
+  if (isFirstLaunch) await seedDatabase();
+
   try {
     const state = await api.getState();
     if (state.current_note_id) {
@@ -1055,6 +1072,18 @@ async function init() {
     mode = currentNote ? state.mode : "new";
   } catch (err) {
     console.error("Failed to restore state:", err);
+  }
+
+  if (isFirstLaunch && !currentNote) {
+    const [seededNodes, seededEdges] = await Promise.all([api.getNodes(), api.getEdges()]);
+    if (seededNodes.length) {
+      const seqToIds = new Set(
+        seededEdges.filter(e => e.relationship_type === "sequence" && !e.is_deleted).map(e => e.to_id)
+      );
+      const head = seededNodes.find(n => !seqToIds.has(n.id)) || seededNodes[0];
+      currentNote = { id: head.id, text: head.text_content };
+      mode = "view";
+    }
   }
 
   render();

@@ -21,3 +21,7 @@ def service_worker():
 @app.get("/manifest.json", response_class=FileResponse)
 def manifest():
     return "static/manifest.json"
+
+@app.get("/amelda-default.json", response_class=FileResponse)
+def default_graph():
+    return "static/amelda-default.json"
