@@ -25,3 +25,7 @@ def manifest():
 @app.get("/amelda-default.json", response_class=FileResponse)
 def default_graph():
     return "static/amelda-default.json"
+
+@app.get("/menu.png", response_class=FileResponse)
+def menu_icon():
+    return "static/menu.png"
