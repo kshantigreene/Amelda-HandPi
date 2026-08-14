@@ -1025,6 +1025,16 @@ async function init() {
   });
   document.addEventListener("click", () => { hamburgerMenu.hidden = true; });
 
+  const rightPanelEl  = document.getElementById("panel-right");
+  const rightOverlay  = document.getElementById("right-panel-overlay");
+  const rightToggleBtn = document.getElementById("right-panel-toggle");
+  const openRightPanel  = () => { rightPanelEl.classList.add("mobile-open");    rightOverlay.classList.add("mobile-open"); };
+  const closeRightPanel = () => { rightPanelEl.classList.remove("mobile-open"); rightOverlay.classList.remove("mobile-open"); };
+  rightToggleBtn.addEventListener("click", () =>
+    rightPanelEl.classList.contains("mobile-open") ? closeRightPanel() : openRightPanel()
+  );
+  rightOverlay.addEventListener("click", closeRightPanel);
+
   document.getElementById("theme-toggle").addEventListener("click", onThemeToggle);
   applyTheme(localStorage.getItem("theme") === "light");
 

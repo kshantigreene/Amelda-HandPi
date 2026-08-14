@@ -101,6 +101,11 @@ body {
   overflow-y: auto;
 }
 
+#panel-top-right {
+  display: flex;
+  padding: 4px;
+}
+
 /* Right panel overrides for the persistent search bar + scrollable content */
 #panel-right {
   overflow-y: hidden;
@@ -377,8 +382,7 @@ body.light-theme #panel-right.connect-mode .block-action {
 
 .focus-search-wrap {
   position: relative;
-  flex: 1;
-  max-width: 270px;
+  flex: 3;
 }
 
 .focus-search-input {
@@ -450,18 +454,19 @@ body.light-theme #panel-right.connect-mode .block-action {
 
 .hamburger-wrap {
   position: relative;
-  padding: 8px;
+  flex: 1;
+  display: flex;
 }
 
 .hamburger-btn {
+  flex: 1;
   background: var(--btn-bg);
-  border: 1px solid var(--btn-border);
-  border-radius: 6px;
+  border: none;
+  border-radius: 5px;
   color: var(--text);
   cursor: pointer;
-  font-size: 1.1rem;
+  font-size: 1.8rem;
   line-height: 1;
-  padding: 6px 10px;
 }
 
 .hamburger-btn:hover {
@@ -502,4 +507,81 @@ body.light-theme #panel-right.connect-mode .block-action {
   height: 1px;
   background: var(--panel-border);
   margin: 2px 0;
+}
+
+/* ── Mobile layout ─────────────────────────────────────── */
+
+#right-panel-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 49;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+#right-panel-toggle {
+  display: none;
+  position: fixed;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 48;
+  width: 20px;
+  height: 56px;
+  border-radius: 6px 0 0 6px;
+  border: 1px solid var(--panel-border);
+  border-right: none;
+  background: var(--panel-bg);
+  color: var(--text);
+  font-size: 0.9rem;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+@media (max-width: 600px) {
+  #panel-top-left,
+  #panel-left,
+  #panel-bottom-left,
+  #panel-bottom-right {
+    display: none;
+  }
+
+  .btn-row {
+    flex-wrap: wrap;
+  }
+
+  .focus-search-wrap {
+    flex-basis: 100%;
+  }
+
+  #panel-top-right {
+    width: auto;
+  }
+
+  #panel-right {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 75vw;
+    max-width: 280px;
+    z-index: 50;
+    border-radius: 0;
+    transform: translateX(100%);
+    transition: transform 0.25s ease;
+  }
+
+  #panel-right.mobile-open {
+    transform: translateX(0);
+  }
+
+  #right-panel-overlay.mobile-open {
+    display: block;
+  }
+
+  #right-panel-toggle {
+    display: flex;
+  }
 }
