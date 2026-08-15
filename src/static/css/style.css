@@ -467,6 +467,10 @@ body.light-theme #panel-right.connect-mode .block-action {
   cursor: pointer;
   font-size: 1.8rem;
   line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
 
 .hamburger-btn:hover {
@@ -475,8 +479,10 @@ body.light-theme #panel-right.connect-mode .block-action {
 
 .hamburger-btn img {
   display: block;
-  width: 100%;
-  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
   object-fit: contain;
 }
 
@@ -595,7 +601,8 @@ body.light-theme #panel-right.connect-mode .block-action {
   }
 
   #panel-top-right {
-    width: auto;
+    width: 56px;
+    flex-shrink: 0;
   }
 
   #panel-right {
