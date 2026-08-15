@@ -22,7 +22,7 @@
     },
     {
       "id": "78439676-10dd-4d8e-b9be-360622986cee",
-      "text_content": "Notes in the vertical dimension are sequentially connected to the focused note. \n\nTapping New Note adds a new note after the currently focused note. \n\nYou can scroll through sequential notes by clicking on a note in the upper or lower panels to focus the note.",
+      "text_content": "Notes in the vertical dimension are sequentially connected to the focused note. \n\nTapping New Note adds a new note after the currently focused note. \n\nYou can scroll through sequential notes by tapping on a note in the upper or lower panels to focus the note.",
       "other_content": null,
       "node_type": "free",
       "creator": "amelda",
@@ -32,7 +32,7 @@
     },
     {
       "id": "df0aa976-2a1d-4410-be27-9feae97ba94a",
-      "text_content": "Notes in the horizontal dimension are conceptual connections to the focused note.\n\nThe left side shows suggested connections (notes that share topics). You can connect these explicitly by tapping the + in the suggested connection. \n\nThe right side shows notes that you explicitly connected to the focused note.\n\nOn a phone, click the small arrows on the sides to reveal the left and right panels.",
+      "text_content": "Notes in the horizontal dimension are conceptual connections to the focused note.\n\nThe left side shows suggested connections (notes that share topics). You can connect these explicitly by tapping the + in the suggested connection. \n\nThe right side shows notes that you explicitly connected to the focused note.\n\nOn a phone, tap the small arrows on the sides to reveal the left and right panels.",
       "other_content": null,
       "node_type": "free",
       "creator": "amelda",
@@ -72,7 +72,7 @@
     },
     {
       "id": "69e5fc12-a48f-4877-bf61-78cc4084948f",
-      "text_content": "To get started on your own notes, click the New Note button twice!",
+      "text_content": "To get started on your own notes, tap the New Note button twice!",
       "other_content": null,
       "node_type": "free",
       "creator": "amelda",
