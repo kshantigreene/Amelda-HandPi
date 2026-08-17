@@ -42,6 +42,7 @@ body {
   flex-direction: column;
   gap: 8px;
   padding: 8px;
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
   overflow: hidden;
 }
 
