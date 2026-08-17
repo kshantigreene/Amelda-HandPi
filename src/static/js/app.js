@@ -489,6 +489,13 @@ function renderRelatedBlocks(panelId, items, focusedId, headerLabel) {
     header.textContent = headerLabel;
     panel.appendChild(header);
   }
+  if (!items.length) {
+    const hint = document.createElement("div");
+    hint.className = "panel-empty-hint";
+    hint.textContent = "Notes containing related topics will appear here.";
+    panel.appendChild(hint);
+    return;
+  }
   for (const { node, weight } of items) {
     const block = document.createElement("div");
     block.className = "related-block";
@@ -696,7 +703,7 @@ function _updateRightContent(contentEl, allNodes, allEdges, nodesById, focusedId
     if (cancelBtn) { cancelBtn.style.display = ""; contentEl.appendChild(cancelBtn); }
   } else {
     if (cancelBtn) { cancelBtn.style.display = "none"; rightPanel.appendChild(cancelBtn); }
-    allEdges
+    const connected = allEdges
       .filter((e) => e.relationship_type === "user" && (e.from_id === focusedId || e.to_id === focusedId))
       .map((e) => ({
         node: nodesById.get(e.from_id === focusedId ? e.to_id : e.from_id),
@@ -706,8 +713,15 @@ function _updateRightContent(contentEl, allNodes, allEdges, nodesById, focusedId
       }))
       .filter((x) => x.node)
       .sort((a, b) => b.weight - a.weight || b.edgeCreatedAt.localeCompare(a.edgeCreatedAt))
-      .slice(0, MAX_RELATED)
-      .forEach(({ node, weight, edgeId }) => {
+      .slice(0, MAX_RELATED);
+
+    if (!connected.length) {
+      const hint = document.createElement("div");
+      hint.className = "panel-empty-hint";
+      hint.textContent = "Notes connected to the focused note will appear here.";
+      contentEl.appendChild(hint);
+    } else {
+      connected.forEach(({ node, weight, edgeId }) => {
         const block = document.createElement("div");
         block.className = "related-block";
         const text = document.createElement("div");
@@ -724,6 +738,7 @@ function _updateRightContent(contentEl, allNodes, allEdges, nodesById, focusedId
         block.addEventListener("click", () => focusOnNode(node));
         contentEl.appendChild(block);
       });
+    }
   }
 }
 
