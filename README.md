@@ -9,6 +9,6 @@ Amelda is a cloud-free notes and journaling application.
 * You decide when to share it and with whom.
 * We will never collect your data or give it to a third party.
 
-Amelda is semi-structured. This means that individual notes can be connected to organize and navigate between notes.
+Amelda is semi-structured. This means that individual notes can be connected to organize and navigate between notes. See the instructions at amelda.net for more info.
 
 If you like Amelda, please consider contributing! https://buymeacoffee.com/amelda
