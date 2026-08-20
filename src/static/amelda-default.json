@@ -22,7 +22,7 @@
     },
     {
       "id": "78439676-10dd-4d8e-b9be-360622986cee",
-      "text_content": "Notes in the vertical dimension are sequentially connected to the focused note. \n\nTapping New Note adds a new note after the currently focused note. \n\nYou can scroll through sequential notes by tapping on a note in the upper or lower panels to focus the note.",
+      "text_content": "Notes in the vertical dimension are sequentially connected to the focused note. \n\nTapping New Note adds a new note after the currently focused note. \n\nThis is great for linear thinking.\n\nYou can scroll through sequential notes by tapping on a note in the upper or lower panels to focus the note.",
       "other_content": null,
       "node_type": "free",
       "creator": "amelda",
@@ -32,12 +32,22 @@
     },
     {
       "id": "df0aa976-2a1d-4410-be27-9feae97ba94a",
-      "text_content": "Notes in the horizontal dimension are conceptual connections to the focused note.\n\nThe left side shows suggested connections (notes that share topics). You can connect these explicitly by tapping the + in the suggested connection. \n\nThe right side shows notes that you explicitly connected to the focused note.\n\nOn a phone, tap the small arrows on the sides to reveal the left and right panels.",
+      "text_content": "Notes in the horizontal dimension are conceptual connections to the focused note.\n\nThis is great for non-linear thinking.\n\nThe left side shows suggested connections (notes that share topics). You can connect these explicitly by tapping the + in the suggested connection. \n\nThe right side shows notes that you explicitly connected to the focused note.",
       "other_content": null,
       "node_type": "free",
       "creator": "amelda",
       "created_at": "2026-08-10T19:11:50.581Z",
       "updated_at": "2026-08-10T19:15:32.481Z",
+      "is_deleted": 0
+    },
+    {
+      "id": "3fc015a1-1120-47e4-bd9c-52ebe2d1cd0f",
+      "text_content": "On a phone, tap the small arrows on the sides to reveal the left and right panels.",
+      "other_content": null,
+      "node_type": "free",
+      "creator": "amelda",
+      "created_at": "2026-08-20T00:00:00.000Z",
+      "updated_at": "2026-08-20T00:00:00.000Z",
       "is_deleted": 0
     },
     {
@@ -155,8 +165,20 @@
       "is_deleted": 0
     },
     {
-      "id": "fc046442-bcfb-4b0f-8d0b-590e86375cc6",
+      "id": "72ac49cd-4636-46bf-87aa-69bc65af29de",
       "from_id": "df0aa976-2a1d-4410-be27-9feae97ba94a",
+      "to_id": "3fc015a1-1120-47e4-bd9c-52ebe2d1cd0f",
+      "directed": 1,
+      "relationship_type": "sequence",
+      "weight": null,
+      "creator": "amelda",
+      "created_at": "2026-08-20T00:00:00.000Z",
+      "updated_at": "2026-08-20T00:00:00.000Z",
+      "is_deleted": 0
+    },
+    {
+      "id": "fc046442-bcfb-4b0f-8d0b-590e86375cc6",
+      "from_id": "3fc015a1-1120-47e4-bd9c-52ebe2d1cd0f",
       "to_id": "cbde8fe3-db5a-4a4a-8a0d-85442d961708",
       "directed": 1,
       "relationship_type": "sequence",
