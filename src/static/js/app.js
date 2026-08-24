@@ -177,39 +177,6 @@ const api = {
       }
     }
   },
-  async matchEdges(nodeId) {
-    if (fileGraph) return { created_edges: [] }; // auto edges skipped for external graphs
-    const [allNodes, allEdges] = await Promise.all([
-      idbGetAll("nodes").then(ns => ns.filter(n => !n.is_deleted)),
-      idbGetAll("edges").then(es => es.filter(e => !e.is_deleted)),
-    ]);
-    const node = allNodes.find(n => n.id === nodeId);
-    if (!node) return { created_edges: [] };
-
-    const alreadyLinked = new Set(
-      allEdges
-        .filter(e => e.from_id === nodeId || e.to_id === nodeId)
-        .map(e => e.from_id === nodeId ? e.to_id : e.from_id)
-    );
-    const nodeWords = extractWords(node.text_content);
-    if (!nodeWords.size) return { created_edges: [] };
-
-    const now = new Date().toISOString();
-    const created = [];
-    for (const other of allNodes) {
-      if (other.id === nodeId || alreadyLinked.has(other.id)) continue;
-      const common = [...nodeWords].filter(w => extractWords(other.text_content).has(w));
-      if (!common.length) continue;
-      const weight = Math.log(common.length + 1);
-      const [fromId, toId] = (node.created_at || "") <= (other.created_at || "")
-        ? [node.id, other.id] : [other.id, node.id];
-      const edge = { id: crypto.randomUUID(), from_id: fromId, to_id: toId, directed: 1, relationship_type: "auto", weight, creator: "system", created_at: now, updated_at: now, is_deleted: 0 };
-      await idbPut("edges", edge);
-      created.push(edge.id);
-      alreadyLinked.add(other.id);
-    }
-    return { created_edges: created };
-  },
   async getNode(id) {
     if (fileGraph) return fileGraph.nodes.find(n => n.id === id && !n.is_deleted) || null;
     const node = await idbGet("nodes", id);
@@ -616,8 +583,25 @@ async function renderGraphPanels() {
     newerIsLast ? null : lastNode, "\u00BB",
     "Later in sequence");
 
-  // For left/right panels, direction doesn't matter -- only edge type does.
-  // Resolve the "other" node for any edge involving the focused node.
+  // Live word-match suggestions for the left panel (not persisted).
+  const focusedWords = extractWords(currentNote.text);
+  const chainSet = new Set(chain); // excludes entire sequence chain, not just direct neighbors
+  const userLinkedIds = new Set(
+    allEdges
+      .filter((e) => e.relationship_type === "user" && (e.from_id === focusedId || e.to_id === focusedId))
+      .map((e) => (e.from_id === focusedId ? e.to_id : e.from_id))
+  );
+  const suggestions = focusedWords.size === 0 ? [] : allNodes
+    .filter((n) => n.id !== focusedId && !chainSet.has(n.id) && !userLinkedIds.has(n.id))
+    .map((n) => {
+      const common = [...focusedWords].filter((w) => extractWords(n.text_content).has(w));
+      return { node: n, weight: Math.log(common.length + 1) };
+    })
+    .filter((x) => x.weight > 0)
+    .sort((a, b) => b.weight - a.weight || (b.node.created_at || "").localeCompare(a.node.created_at || ""))
+    .slice(0, 10);
+
+  // For right panel, direction doesn't matter -- only edge type does.
   const toRankedByType = (type) =>
     allEdges
       .filter((e) => e.relationship_type === type && (e.from_id === focusedId || e.to_id === focusedId))
@@ -629,7 +613,7 @@ async function renderGraphPanels() {
       .sort((a, b) => b.weight - a.weight || (b.node.created_at || "").localeCompare(a.node.created_at || ""))
       .slice(0, MAX_RELATED);
 
-  renderRelatedBlocks("panel-left", toRankedByType("auto"), focusedId, "Suggested Connections");
+  renderRelatedBlocks("panel-left", suggestions, focusedId, "Suggested Connections");
   renderRightPanel(allNodes, allEdges, nodesById, focusedId);
 }
 
@@ -686,7 +670,6 @@ function _updateRightContent(contentEl, allNodes, allEdges, nodesById, focusedId
       } else {
         nodeId = crypto.randomUUID();
         await api.createNode(nodeId, text, null);
-        await api.matchEdges(nodeId);
       }
       const alreadyUserLinked = allEdges.some(
         (e) => e.relationship_type === "user" &&
@@ -849,9 +832,6 @@ async function onSubmitNew(text) {
     setAppState({ id: noteId, text }, "view");
 
     if (isNew) {
-      // Word-match edges are computed server-side; wait for that specific
-      // call to finish, then refresh so they actually show up.
-      await api.matchEdges(noteId);
       renderGraphPanels();
     }
   } catch (err) {
