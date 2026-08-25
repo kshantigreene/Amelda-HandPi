@@ -367,37 +367,61 @@ function buildFocusSearch() {
   input.className = "focus-search-input";
   input.placeholder = "Find note\u2026";
 
+  const recentBtn = document.createElement("button");
+  recentBtn.className = "btn focus-search-recent-btn";
+  recentBtn.textContent = "Recent Notes";
+
   const dropdown = document.createElement("div");
   dropdown.className = "focus-search-dropdown";
   dropdown.hidden = true;
 
-  input.addEventListener("input", async () => {
-    const q = input.value.trim().toLowerCase();
+  const hideDropdown = () => { dropdown.hidden = true; dropdown.innerHTML = ""; };
+
+  const showItems = (nodes) => {
     dropdown.innerHTML = "";
-    if (!q) { dropdown.hidden = true; return; }
-    const nodes = await api.getNodes();
-    const matches = nodes
-      .filter((n) => n.id !== currentNote?.id && (n.text_content || "").toLowerCase().includes(q))
-      .slice(0, 8);
-    if (!matches.length) { dropdown.hidden = true; return; }
-    for (const node of matches) {
+    for (const node of nodes) {
       const item = document.createElement("div");
       item.className = "focus-search-item";
       item.textContent = node.text_content;
       item.addEventListener("mousedown", (e) => {
-        e.preventDefault(); // keep dropdown alive until click fires
+        e.preventDefault();
         focusOnNode(node);
+        hideDropdown();
+        input.value = "";
       });
       dropdown.appendChild(item);
     }
-    dropdown.hidden = false;
+    dropdown.hidden = nodes.length === 0;
+  };
+
+  input.addEventListener("input", async () => {
+    const q = input.value.trim().toLowerCase();
+    if (!q) { hideDropdown(); return; }
+    const nodes = await api.getNodes();
+    showItems(
+      nodes.filter((n) => n.id !== currentNote?.id && (n.text_content || "").toLowerCase().includes(q)).slice(0, 8)
+    );
   });
 
   input.addEventListener("blur", () => {
-    setTimeout(() => { dropdown.hidden = true; input.value = ""; }, 150);
+    setTimeout(() => { hideDropdown(); input.value = ""; }, 150);
   });
 
-  wrapper.append(input, dropdown);
+  recentBtn.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    if (!dropdown.hidden) { hideDropdown(); return; }
+    const [allNodes, allEdges] = await Promise.all([api.getNodes(), api.getEdges()]);
+    const seqToIds = new Set(allEdges.filter((e) => e.relationship_type === "sequence").map((e) => e.to_id));
+    const heads = allNodes
+      .filter((n) => !seqToIds.has(n.id) && n.id !== currentNote?.id)
+      .sort((a, b) => (b.updated_at || "").localeCompare(a.updated_at || ""))
+      .slice(0, 20);
+    showItems(heads);
+  });
+
+  document.addEventListener("click", hideDropdown);
+
+  wrapper.append(input, recentBtn, dropdown);
   return wrapper;
 }
 
