@@ -384,21 +384,21 @@ body.light-theme #panel-right.connect-mode .block-action {
 .focus-search-wrap {
   position: relative;
   flex: 3;
-  display: flex;
-  align-items: center;
-  gap: 4px;
 }
 
 .focus-search-recent-btn {
-  flex-shrink: 0;
   font-size: 0.75rem;
   padding: 4px 8px;
   white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.btn-row .btn {
+  flex-shrink: 0;
 }
 
 .focus-search-input {
-  flex: 1;
-  min-width: 0;
+  width: 100%;
   background: var(--input-bg);
   border: 1px solid var(--panel-border);
   border-radius: 6px;

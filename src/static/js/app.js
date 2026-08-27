@@ -310,7 +310,7 @@ function buildEditor(initialText, buttons, shortcutAction) {
   for (const item of buttons) {
     if (item.spacer) {
       const s = document.createElement("div");
-      s.style.flex = "1";
+      s.style.cssText = "flex: 1; flex-shrink: 999; min-width: 0;";
       btnRow.appendChild(s);
       continue;
     }
@@ -343,7 +343,7 @@ function buildViewer(text, buttons) {
   for (const item of buttons) {
     if (item.spacer) {
       const s = document.createElement("div");
-      s.style.flex = "1";
+      s.style.cssText = "flex: 1; flex-shrink: 999; min-width: 0;";
       btnRow.appendChild(s);
       continue;
     }
@@ -369,7 +369,7 @@ function buildFocusSearch() {
 
   const recentBtn = document.createElement("button");
   recentBtn.className = "btn focus-search-recent-btn";
-  recentBtn.textContent = "Recent Notes";
+  recentBtn.textContent = "Recent";
 
   const dropdown = document.createElement("div");
   dropdown.className = "focus-search-dropdown";
@@ -421,8 +421,8 @@ function buildFocusSearch() {
 
   document.addEventListener("click", hideDropdown);
 
-  wrapper.append(input, recentBtn, dropdown);
-  return wrapper;
+  wrapper.append(input, dropdown);
+  return { searchEl: wrapper, recentBtn };
 }
 
 function renderFocusedPanel() {
@@ -458,7 +458,10 @@ function renderFocusedPanel() {
     ]);
   }
 
-  el.querySelector(".btn-row").prepend(buildFocusSearch());
+  const { searchEl, recentBtn } = buildFocusSearch();
+  const btnRow = el.querySelector(".btn-row");
+  btnRow.prepend(recentBtn);
+  btnRow.prepend(searchEl);
   panel.appendChild(el);
 }
 

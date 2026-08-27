@@ -1,6 +1,6 @@
 // Copyright © 2026 Kshanti Greene. All rights reserved.
 
-const CACHE_NAME = "amelda-v11";
+const CACHE_NAME = "amelda-v12";
 const PRECACHE = [
   "./",
   "./css/style.css",
