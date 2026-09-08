@@ -426,9 +426,9 @@ function buildFocusSearch() {
 }
 
 function renderFocusedPanel() {
+  console.log("render focused, "+mode)
   const panel = document.getElementById("center");
   panel.innerHTML = "";
-
   let el;
   if (mode === "new") {
     el = buildEditor("", [
@@ -1038,7 +1038,25 @@ async function seedDatabase() {
   }
 }
 
+// Programmatic textarea.focus() doesn't reliably open the on-screen
+// keyboard on mobile, and a real tap into an already-focused textarea won't
+// refire "focus" -- so neither event is a trustworthy signal. The
+// visualViewport shrinking (while window.innerHeight stays put) is the
+// actual, direct evidence the keyboard is covering part of the screen.
+const KEYBOARD_HEIGHT_THRESHOLD = 120; // px; well above toolbar show/hide noise
+
+function updateKeyboardState() {
+  const vv = window.visualViewport;
+  const isSmallScreen = window.matchMedia("(max-width: 600px)").matches;
+  const keyboardOpen = isSmallScreen && !!vv && (window.innerHeight - vv.height > KEYBOARD_HEIGHT_THRESHOLD);
+  document.body.classList.toggle("keyboard-open", keyboardOpen);
+}
+
 async function init() {
+  if (window.visualViewport) window.visualViewport.addEventListener("resize", updateKeyboardState);
+  window.addEventListener("resize", updateKeyboardState);
+  updateKeyboardState();
+
   const hamburgerBtn  = document.getElementById("hamburger-btn");
   const hamburgerMenu = document.getElementById("hamburger-menu");
   hamburgerBtn.addEventListener("click", (e) => {

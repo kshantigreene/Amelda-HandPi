@@ -87,10 +87,12 @@ body {
 }
 
 #middle-row {
-  flex: 1;
   display: flex;
   gap: 8px;
-  min-height: 200px;
+  flex-grow: 1;
+  flex-shrink: 0;
+  flex-basis: 260px;
+  min-height: 260px;
 }
 
 .panel-left,
@@ -642,5 +644,13 @@ body.light-theme #panel-right.connect-mode .block-action {
 
   #right-panel-toggle {
     display: flex;
+  }
+
+  /* The virtual keyboard eats vertical space the flex layout can't see
+     coming; once it's up (detected via visualViewport in app.js), drop the
+     bottom row entirely rather than let it fight the editor for whatever
+     room is left. */
+  body.keyboard-open #bottom-row {
+    display: none;
   }
 }
