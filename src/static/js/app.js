@@ -5,6 +5,14 @@ const IDB_NAME = "amelda";
 const IDB_VERSION = 1;
 let _idb = null;
 
+// Best-effort request to exempt this origin's storage from eviction under
+// disk-space pressure (Chrome/Firefox). Does nothing for Safari's separate
+// 7-day-inactivity eviction -- that one only backs off for home-screen-
+// launched apps, not via this API -- but it's a free improvement elsewhere.
+if (navigator.storage?.persist) {
+  navigator.storage.persist().catch(() => {});
+}
+
 function openIDB() {
   if (_idb) return Promise.resolve(_idb);
   return new Promise((resolve, reject) => {
@@ -1038,25 +1046,7 @@ async function seedDatabase() {
   }
 }
 
-// Programmatic textarea.focus() doesn't reliably open the on-screen
-// keyboard on mobile, and a real tap into an already-focused textarea won't
-// refire "focus" -- so neither event is a trustworthy signal. The
-// visualViewport shrinking (while window.innerHeight stays put) is the
-// actual, direct evidence the keyboard is covering part of the screen.
-const KEYBOARD_HEIGHT_THRESHOLD = 120; // px; well above toolbar show/hide noise
-
-function updateKeyboardState() {
-  const vv = window.visualViewport;
-  const isSmallScreen = window.matchMedia("(max-width: 600px)").matches;
-  const keyboardOpen = isSmallScreen && !!vv && (window.innerHeight - vv.height > KEYBOARD_HEIGHT_THRESHOLD);
-  document.body.classList.toggle("keyboard-open", keyboardOpen);
-}
-
 async function init() {
-  if (window.visualViewport) window.visualViewport.addEventListener("resize", updateKeyboardState);
-  window.addEventListener("resize", updateKeyboardState);
-  updateKeyboardState();
-
   const hamburgerBtn  = document.getElementById("hamburger-btn");
   const hamburgerMenu = document.getElementById("hamburger-menu");
   hamburgerBtn.addEventListener("click", (e) => {

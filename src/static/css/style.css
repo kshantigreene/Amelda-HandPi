@@ -645,34 +645,4 @@ body.light-theme #panel-right.connect-mode .block-action {
   #right-panel-toggle {
     display: flex;
   }
-
-  /* The virtual keyboard eats vertical space the flex layout can't see
-     coming; once it's up (detected via visualViewport in app.js), drop the
-     bottom row entirely rather than let it fight the editor for whatever
-     room is left. */
-  body.keyboard-open #bottom-row {
-    display: none;
-  }
-
-  /* .textarea-wrap is flex:1, so it always exactly fills whatever space is
-     left -- there's nothing for the button row to overflow against, so
-     position:sticky has no effect here. Pinning it to the real (visual)
-     viewport instead keeps it above the keyboard regardless of how tall the
-     rest of the layout thinks the page is. */
-  body.keyboard-open .nav-focused-inner {
-    padding-bottom: 64px; /* reserve room so text can't hide behind the floating row */
-  }
-
-  body.keyboard-open .nav-focused-inner .btn-row {
-    position: fixed;
-    left: 8px;
-    right: 8px;
-    bottom: max(8px, env(safe-area-inset-bottom));
-    background: var(--panel-bg);
-    padding: 8px;
-    border: 1px solid var(--panel-border);
-    border-radius: 6px;
-    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.25);
-    z-index: 60;
-  }
 }
