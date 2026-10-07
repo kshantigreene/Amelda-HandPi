@@ -214,6 +214,14 @@ let connectSearch = "";
 let _rightPanelFocusedId = null; // tracks which note the right panel's shell was built for
 let _graphPanelVersion = 0;      // incremented on each renderGraphPanels call; stale fetches self-discard
 
+// Import-merge flow: non-null while stepping through conflicts from
+// "Import Graph...". Takes over the center panel (see render()) until every
+// conflict is resolved; unresolved conflicts default to keeping "mine" if
+// the user navigates away, since nothing is written for that choice.
+let _importConflicts = null;  // array of {id, mine, imported}, or null when no import is active
+let _importIndex = 0;
+let _importFirstNodeId = null;  // id to re-fetch and focus once the flow finishes
+
 const VERTICAL_EDGE_TYPE = "sequence";
 const MAX_RELATED = 5;
 
@@ -819,8 +827,169 @@ function renderRightPanel(allNodes, allEdges, nodesById, focusedId) {
 }
 
 function render() {
+  if (_importConflicts) {
+    renderImportConflictPanel();
+    renderSidePanel("panel-top-center", null, null);
+    renderSidePanel("panel-bottom-center", null, null);
+    document.getElementById("panel-left").innerHTML = "";
+    document.getElementById("panel-right").innerHTML = "";
+    return;
+  }
   renderFocusedPanel();
   renderGraphPanels();
+}
+
+// Center-panel takeover for "Import Graph...": one conflict at a time, with
+// "Mine" preselected so clicking straight through keeps every local note.
+function renderImportConflictPanel() {
+  const panel = document.getElementById("center");
+  panel.innerHTML = "";
+  const container = document.createElement("div");
+  container.className = "nav-focused-inner";
+
+  if (_importIndex >= _importConflicts.length) {
+    const display = document.createElement("div");
+    display.className = "note-display";
+    display.textContent = "All done with import!";
+
+    const btnRow = document.createElement("div");
+    btnRow.className = "btn-row";
+    const returnBtn = document.createElement("button");
+    returnBtn.className = "btn";
+    returnBtn.textContent = "Click to return";
+    returnBtn.addEventListener("click", finishImport);
+    btnRow.appendChild(returnBtn);
+
+    container.append(display, btnRow);
+    panel.appendChild(container);
+    return;
+  }
+
+  const conflict = _importConflicts[_importIndex];
+  let selected = "mine";
+
+  const header = document.createElement("div");
+  header.className = "panel-section-header";
+  header.textContent = `Conflict ${_importIndex + 1} of ${_importConflicts.length}`;
+
+  const hint = document.createElement("div");
+  hint.className = "import-conflict-hint";
+  hint.textContent = "Select the version you want to keep.";
+
+  const compareWrap = document.createElement("div");
+  compareWrap.className = "import-conflict-compare";
+
+  const makeOption = (label, text, key) => {
+    const option = document.createElement("div");
+    option.className = "import-conflict-option" + (key === selected ? " selected" : "");
+    const labelEl = document.createElement("div");
+    labelEl.className = "import-conflict-label";
+    labelEl.textContent = label;
+    const textEl = document.createElement("div");
+    textEl.className = "note-display";
+    textEl.textContent = text;
+    option.append(labelEl, textEl);
+    option.addEventListener("click", () => {
+      selected = key;
+      mineOption.classList.toggle("selected", key === "mine");
+      importedOption.classList.toggle("selected", key === "imported");
+    });
+    return option;
+  };
+
+  const mineOption = makeOption("Mine", conflict.mine.text_content, "mine");
+  const importedOption = makeOption("Imported", conflict.imported.text_content, "imported");
+  compareWrap.append(mineOption, importedOption);
+
+  const btnRow = document.createElement("div");
+  btnRow.className = "btn-row";
+  const nextBtn = document.createElement("button");
+  nextBtn.className = "btn";
+  nextBtn.textContent = "Keep & Next";
+  nextBtn.addEventListener("click", async () => {
+    if (selected === "imported") {
+      await idbPut("nodes", conflict.imported);
+    }
+    _importIndex++;
+    render();
+  });
+  btnRow.appendChild(nextBtn);
+
+  container.append(header, hint, compareWrap, btnRow);
+  panel.appendChild(container);
+}
+
+async function mergeImportedGraph(data) {
+  const localNodes = await idbGetAll("nodes");
+  const localNodesById = new Map(localNodes.map((n) => [n.id, n]));
+  const conflicts = [];
+
+  for (const importedNode of data.nodes) {
+    const mine = localNodesById.get(importedNode.id);
+    if (!mine) {
+      await idbPut("nodes", importedNode);
+    } else if (mine.text_content === importedNode.text_content) {
+      if (importedNode.is_deleted && !mine.is_deleted) {
+        await idbPut("nodes", { ...mine, is_deleted: 1 });
+      }
+    } else {
+      conflicts.push({ id: importedNode.id, mine, imported: importedNode });
+    }
+  }
+
+  const localEdges = await idbGetAll("edges");
+  const localEdgesById = new Map(localEdges.map((e) => [e.id, e]));
+  for (const importedEdge of data.edges) {
+    const mine = localEdgesById.get(importedEdge.id);
+    if (!mine) {
+      await idbPut("edges", importedEdge);
+    } else if (importedEdge.is_deleted && !mine.is_deleted) {
+      await idbPut("edges", { ...mine, is_deleted: 1 });
+    }
+  }
+
+  const firstNode = data.nodes
+    .filter((n) => !n.is_deleted)
+    .sort((a, b) => (a.created_at || "").localeCompare(b.created_at || ""))[0] || null;
+
+  return { conflicts, firstNodeId: firstNode ? firstNode.id : null };
+}
+
+async function startImport(data) {
+  if (!data || !Array.isArray(data.nodes) || !Array.isArray(data.edges)) {
+    alert("Invalid graph file: expected { nodes: [], edges: [] }.");
+    return;
+  }
+  if (fileGraph) {
+    alert("Close the open external graph before importing.");
+    return;
+  }
+  const { conflicts, firstNodeId } = await mergeImportedGraph(data);
+  _importFirstNodeId = firstNodeId;
+  if (!conflicts.length) {
+    finishImport();
+    return;
+  }
+  _importConflicts = conflicts;
+  _importIndex = 0;
+  render();
+}
+
+// Re-fetches from storage rather than trusting any in-memory copy of the
+// node -- the imported file's object still has the losing text even after
+// the user picked "Mine", so focusing it directly would briefly show the
+// wrong version until the next reload re-read IndexedDB.
+async function finishImport() {
+  _importConflicts = null;
+  _importIndex = 0;
+  const id = _importFirstNodeId;
+  _importFirstNodeId = null;
+  const node = id ? await api.getNode(id) : null;
+  if (node) {
+    focusOnNode(node);
+  } else {
+    render();
+  }
 }
 
 async function resolveNoteId(text, previousId) {
@@ -1093,6 +1262,21 @@ async function init() {
     openGraphInput.value = ""; // reset so the same file can be reopened
   });
   document.getElementById("open-graph").addEventListener("click", () => openGraphInput.click());
+
+  const importGraphInput = document.getElementById("import-graph-input");
+  importGraphInput.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try { startImport(JSON.parse(ev.target.result)); }
+      catch { alert("Could not parse file as JSON."); }
+    };
+    reader.readAsText(file);
+    importGraphInput.value = ""; // reset so the same file can be reimported
+  });
+  document.getElementById("import-graph").addEventListener("click", () => importGraphInput.click());
+
   document.getElementById("save-graph").addEventListener("click", saveFileGraph);
   document.getElementById("close-graph").addEventListener("click", closeFileGraph);
 

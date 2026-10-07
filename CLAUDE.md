@@ -102,10 +102,11 @@ rather than assigning those globals directly, since it also persists state and r
 ### PWA/offline behavior
 
 [sw.js](src/static/sw.js) is a cache-first service worker with a small static `PRECACHE` list
-(index, css, app.js, manifest, default seed graph, menu icon). **Bump `CACHE_NAME`
-(currently `"amelda-v12"`) whenever any precached file changes**, or returning visitors will keep
-serving stale assets — the activate handler only deletes caches whose name differs from the
-current `CACHE_NAME`.
+(index, css, app.js, manifest, default seed graph, menu icon). Changing any precached file without
+bumping `CACHE_NAME` means returning visitors keep serving stale assets — the activate handler
+only deletes caches whose name differs from the current `CACHE_NAME`. **Despite that, do not bump
+`CACHE_NAME` on your own** — the user bumps it explicitly, on their own schedule, rather than on
+every precached-file edit. Only change it when the user asks.
 
 [static/amelda-default.json](src/static/amelda-default.json) is the seed graph shown to
 first-time users (a short in-app tutorial written as a connected note chain). It's loaded once, on
