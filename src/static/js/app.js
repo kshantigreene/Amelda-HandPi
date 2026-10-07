@@ -850,7 +850,9 @@ function renderImportConflictPanel() {
   if (_importIndex >= _importConflicts.length) {
     const display = document.createElement("div");
     display.className = "note-display";
-    display.textContent = "All done with import!";
+    display.textContent = _importConflicts.length
+      ? "All done with import!"
+      : "Import complete, no conflicts.";
 
     const btnRow = document.createElement("div");
     btnRow.className = "btn-row";
@@ -966,10 +968,8 @@ async function startImport(data) {
   }
   const { conflicts, firstNodeId } = await mergeImportedGraph(data);
   _importFirstNodeId = firstNodeId;
-  if (!conflicts.length) {
-    finishImport();
-    return;
-  }
+  // Routed through the same "done" screen even when conflicts is empty, so
+  // there's always a visible confirmation that the import happened.
   _importConflicts = conflicts;
   _importIndex = 0;
   render();
